@@ -4,9 +4,9 @@ import SitePackage from './pages/SitePackage'
 import Report from './pages/Report'
 
 const NAV_ITEMS = [
-  { path: '/',        label: '信实链',   sub: 'EVENT CHAIN',   icon: '⬡' },
-  { path: '/site',    label: '点位包',   sub: 'SITE PACKAGE',  icon: '◎' },
-  { path: '/report',  label: '综合报告', sub: 'INTEL REPORT',  icon: '▣' },
+  { path: '/',        label: '态势分析', sub: 'SITUATION MAP',  icon: '◎' },
+  { path: '/chain',   label: '信实链',   sub: 'EVENT CHAIN',    icon: '⬡' },
+  { path: '/report',  label: '智能预测', sub: 'INTEL REPORT',   icon: '▣' },
 ]
 
 function Nav() {
@@ -34,6 +34,12 @@ function Nav() {
           SATINT
         </span>
         <span style={{ fontSize: '10px', color: '#334155', marginLeft: '4px', letterSpacing: '0.1em' }}>v0.1 DEMO</span>
+        <span style={{
+          fontSize: '9px', color: '#1e3a5f', marginLeft: '8px',
+          letterSpacing: '0.08em', borderLeft: '1px solid #1a2d45', paddingLeft: '8px',
+        }}>
+          卫星影像 → 信实验证 → 智能预测
+        </span>
       </div>
 
       {/* Nav links */}
@@ -73,10 +79,10 @@ export default function App() {
       <Nav />
       <div style={{ paddingTop: '52px', height: '100vh', overflow: 'hidden' }}>
         <Routes>
-          <Route path="/"       element={<EventChain />} />
-          <Route path="/site"   element={<SitePackage />} />
+          <Route path="/"            element={<SitePackage />} />
           <Route path="/site/:siteId" element={<SitePackage />} />
-          <Route path="/report" element={<Report />} />
+          <Route path="/chain"       element={<EventChain />} />
+          <Route path="/report"      element={<Report />} />
         </Routes>
       </div>
     </BrowserRouter>
