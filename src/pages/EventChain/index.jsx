@@ -96,7 +96,7 @@ function EventPanel({ event, onClose, onJumpSite }) {
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
           }}
         >
-          <span>◎</span> 查看点位包影像
+          <span>◎</span> 查看态势分析 →
         </button>
       )}
     </div>
@@ -222,10 +222,11 @@ export default function EventChain() {
     // Node outer ring (verified pulse)
     node.filter(d => d.verified).append('circle')
       .attr('r', 24)
+      .attr('class', 'verified-pulse')
       .attr('fill', 'none')
       .attr('stroke', d => scoreColor(d.score))
       .attr('stroke-width', 1)
-      .attr('opacity', 0.3)
+      .attr('opacity', 0.5)
 
     // Node body
     node.append('circle')
@@ -335,6 +336,13 @@ export default function EventChain() {
 
   return (
     <div style={{ display: 'flex', height: '100%', overflow: 'hidden' }}>
+      <style>{`
+        @keyframes pulse-ring {
+          0%, 100% { opacity: 0.5; }
+          50%       { opacity: 0.1; }
+        }
+        .verified-pulse { animation: pulse-ring 2s ease-in-out infinite; }
+      `}</style>
       {/* 左侧面板 */}
       <div style={{
         width: '240px', flexShrink: 0,
@@ -382,6 +390,16 @@ export default function EventChain() {
           />
         ))}
 
+        {/* 数据流说明 */}
+        <div style={{
+          marginTop: '12px', padding: '8px 10px',
+          background: '#22c55e08', border: '1px solid #22c55e22',
+          borderRadius: '3px', fontSize: '9px', color: '#1e3a5f', lineHeight: 1.6,
+        }}>
+          ✓ 卫星影像锚定节点（绿色）<br/>
+          将提升整链置信度加权评分
+        </div>
+
         {/* 统计 */}
         <div style={{ marginTop: '20px', padding: '12px', background: '#080f1e', borderRadius: '4px', border: '1px solid #1a2d45' }}>
           <div style={{ fontSize: '9px', color: '#64748b', marginBottom: '10px', letterSpacing: '0.1em' }}>全局统计</div>
@@ -410,7 +428,7 @@ export default function EventChain() {
           lineHeight: 1.8,
         }}>
           <div>滚轮缩放 · 拖拽移动节点 · 点击节点高亮链</div>
-          <div>绿色节点 · 点击详情后可跳转点位包</div>
+          <div>绿色节点 · 点击详情后可跳转态势分析</div>
         </div>
 
         {/* 事件详情面板 */}
