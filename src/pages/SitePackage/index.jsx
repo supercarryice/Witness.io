@@ -2,6 +2,100 @@ import { useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { SITES } from '../../data/mockData'
 
+// ── 状态颜色 ─────────────────────────────────────────────────
+function statusColor(status) {
+  if (status === 'operational') return '#22c55e'
+  if (status === 'damaged')     return '#f59e0b'
+  return '#ef4444'
+}
+
+function statusLabel(status) {
+  if (status === 'operational') return '运行中'
+  if (status === 'damaged')     return '受损'
+  return '被摧毁'
+}
+
+// ── 左侧基地列表 ──────────────────────────────────────────────
+function BaseList({ sites, selectedId, onSelect }) {
+  const [filter, setFilter] = useState('all')
+  const filters = [
+    { key: 'all',         label: '全部' },
+    { key: 'operational', label: '运行中' },
+    { key: 'damaged',     label: '受损' },
+    { key: 'destroyed',   label: '被摧毁' },
+  ]
+  const visible = filter === 'all' ? sites : sites.filter(s => s.status === filter)
+
+  return (
+    <div style={{
+      width: '220px', flexShrink: 0,
+      background: '#040810', borderRight: '1px solid #1a2d45',
+      display: 'flex', flexDirection: 'column', overflow: 'hidden',
+    }}>
+      {/* 标题 */}
+      <div style={{ padding: '12px 14px', borderBottom: '1px solid #1a2d45' }}>
+        <div style={{ fontSize: '9px', color: '#64748b', letterSpacing: '0.1em', marginBottom: '8px' }}>
+          SITUATION MAP · 监控点位
+        </div>
+        {/* 筛选按钮 */}
+        <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+          {filters.map(f => (
+            <button key={f.key} onClick={() => setFilter(f.key)}
+              style={{
+                padding: '3px 8px', borderRadius: '2px', cursor: 'pointer',
+                fontSize: '9px', letterSpacing: '0.06em',
+                background: filter === f.key ? '#f59e0b22' : 'transparent',
+                border: `1px solid ${filter === f.key ? '#f59e0b' : '#1a2d45'}`,
+                color: filter === f.key ? '#f59e0b' : '#64748b',
+              }}
+            >{f.label}</button>
+          ))}
+        </div>
+      </div>
+
+      {/* 基地列表 */}
+      <div style={{ flex: 1, overflowY: 'auto' }}>
+        {visible.map(site => {
+          const isSelected = site.id === selectedId
+          const sc = statusColor(site.status)
+          return (
+            <div key={site.id} onClick={() => onSelect(site.id)}
+              style={{
+                padding: '10px 14px', cursor: 'pointer',
+                borderBottom: '1px solid #0d1a2e',
+                borderLeft: `2px solid ${isSelected ? sc : 'transparent'}`,
+                background: isSelected ? `${sc}0d` : 'transparent',
+                transition: 'all 0.15s',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '3px' }}>
+                <div style={{
+                  width: '7px', height: '7px', borderRadius: '50%',
+                  background: sc, boxShadow: `0 0 4px ${sc}`,
+                  flexShrink: 0,
+                }} />
+                <div style={{ fontSize: '11px', color: isSelected ? '#e2e8f0' : '#94a3b8', fontWeight: isSelected ? 600 : 400, lineHeight: 1.3 }}>
+                  {site.name}
+                </div>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', paddingLeft: '15px' }}>
+                <span style={{ fontSize: '9px', color: '#334155' }}>{site.country}</span>
+                <span style={{ fontSize: '9px', color: sc }}>{statusLabel(site.status)}</span>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      {/* 底部数据流提示 */}
+      <div style={{ padding: '10px 14px', borderTop: '1px solid #1a2d45', fontSize: '9px', color: '#1e3a5f', lineHeight: 1.6 }}>
+        ◉ 卫星影像 → 事实基础层<br/>
+        点位数据锚定信实链节点
+      </div>
+    </div>
+  )
+}
+
 // ── 颜色工具 ─────────────────────────────────────────────────
 function scoreColor(score) {
   if (score >= 80) return '#22c55e'
@@ -147,6 +241,8 @@ export default function SitePackage() {
 
   return (
     <div style={{ display: 'flex', height: '100%', overflow: 'hidden' }}>
+      <BaseList sites={SITES} selectedId={selectedId} onSelect={id => { setSelectedId(id); setImgIdx(0) }} />
+      <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
       {/* 地图 */}
       <div style={{ flex: 1, position: 'relative' }}>
         <SiteMap sites={SITES} selectedId={selectedId} onSelect={id => { setSelectedId(id); setImgIdx(0) }} />
@@ -294,6 +390,7 @@ export default function SitePackage() {
           ))}
         </div>
       </div>
+    </div>
     </div>
   )
 }
