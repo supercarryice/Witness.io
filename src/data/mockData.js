@@ -67,7 +67,22 @@ export const SITES = [
       { date: '2025-11-03', label: '任务返回后', desc: '跑道正常，停机坪F-16 12架可见', score: 0.91 },
       { date: '2025-10-28', label: '任务前状态', desc: '停机坪F-16 10架，新增2架', score: 0.88 },
       { date: '2025-10-15', label: '基线状态',   desc: 'F-16 10架，C-130 4架，正常部署', score: 0.85 },
-    ]
+    ],
+    status: 'operational',
+    strategicValue: 'S',
+    aci: 88,
+    dci: 75,
+    dailyData: {
+      dates: ['10/28','10/29','10/30','10/31','11/01','11/02','11/03'],
+      aci:   [82, 83, 85, 86, 87, 88, 88],
+      dci:   [70, 71, 72, 73, 74, 75, 75],
+    },
+    facilities: [
+      { name: '主跑道',     damage: 0,  verified: true  },
+      { name: '加固机库',   damage: 0,  verified: true  },
+      { name: 'F-16停机坪', damage: 0,  verified: true  },
+      { name: 'SAM阵地',    damage: 0,  verified: true  },
+    ],
   },
   {
     id: 'S2',
@@ -82,7 +97,20 @@ export const SITES = [
     ],
     imagery: [
       { date: '2025-11-03', label: '侦察任务中', desc: 'RC-135在目标区上空', score: 0.88 },
-    ]
+    ],
+    status: 'operational',
+    strategicValue: 'B',
+    aci: 40,
+    dci: 30,
+    dailyData: {
+      dates: ['10/28','10/29','10/30','10/31','11/01','11/02','11/03'],
+      aci:   [38, 39, 40, 40, 40, 40, 40],
+      dci:   [28, 29, 30, 30, 30, 30, 30],
+    },
+    facilities: [
+      { name: '临时跑道',   damage: 0, verified: true  },
+      { name: '侦察设备区', damage: 0, verified: true  },
+    ],
   },
   {
     id: 'S3',
@@ -99,7 +127,22 @@ export const SITES = [
     imagery: [
       { date: '2025-11-03', label: '打击后', desc: '2号机库坍塌，跑道弹坑×3，车辆疏散', score: 0.97 },
       { date: '2025-10-31', label: '打击前', desc: '设施完整，车辆活动正常', score: 0.95 },
-    ]
+    ],
+    status: 'destroyed',
+    strategicValue: 'A',
+    aci: 18,
+    dci: 15,
+    dailyData: {
+      dates: ['10/28','10/29','10/30','10/31','11/01','11/02','11/03'],
+      aci:   [75, 76, 77, 77, 75, 20, 18],
+      dci:   [68, 68, 69, 70, 68, 18, 15],
+    },
+    facilities: [
+      { name: '主机库(1#)',    damage: 0,  verified: true  },
+      { name: '机库(2#受损)',  damage: 95, verified: true  },
+      { name: '主跑道',        damage: 40, verified: true  },
+      { name: '指挥中心',      damage: 60, verified: false },
+    ],
   },
   {
     id: 'S4',
@@ -117,7 +160,20 @@ export const SITES = [
     imagery: [
       { date: '2025-11-02', label: '对峙解除', desc: '航母编队向东驶出，民船通行恢复', score: 0.82 },
       { date: '2025-11-01', label: '集结中', desc: '航母及护卫舰群在海峡口徘徊', score: 0.93 },
-    ]
+    ],
+    status: 'operational',
+    strategicValue: 'S',
+    aci: 92,
+    dci: 85,
+    dailyData: {
+      dates: ['10/28','10/29','10/30','10/31','11/01','11/02','11/03'],
+      aci:   [80, 82, 85, 88, 92, 92, 92],
+      dci:   [72, 74, 78, 82, 85, 85, 85],
+    },
+    facilities: [
+      { name: 'CVN-77 甲板', damage: 0, verified: true  },
+      { name: '护卫编队',    damage: 0, verified: false },
+    ],
   },
   {
     id: 'S5',
@@ -132,7 +188,20 @@ export const SITES = [
     ],
     imagery: [
       { date: '2025-11-01', label: '激活状态', desc: '6辆导弹发射车驶离遮蔽棚，展开部署', score: 0.71 },
-    ]
+    ],
+    status: 'damaged',
+    strategicValue: 'A',
+    aci: 55,
+    dci: 70,
+    dailyData: {
+      dates: ['10/28','10/29','10/30','10/31','11/01','11/02','11/03'],
+      aci:   [50, 51, 52, 53, 55, 55, 55],
+      dci:   [62, 64, 65, 68, 70, 70, 70],
+    },
+    facilities: [
+      { name: '发射车遮蔽棚', damage: 0,  verified: true  },
+      { name: '雷达站',       damage: 20, verified: false },
+    ],
   },
   {
     id: 'S6',
@@ -151,7 +220,21 @@ export const SITES = [
       { date: '2025-11-01', label: '当前状态', desc: '跑道北段延伸400m，雷达天线疑似安装', score: 0.88 },
       { date: '2025-10-28', label: '施工中期', desc: '跑道延伸200m，工程机械活跃', score: 0.92 },
       { date: '2025-10-15', label: '施工初期', desc: '西侧出现工程车辆，土方作业', score: 0.88 },
-    ]
+    ],
+    status: 'damaged',
+    strategicValue: 'A',
+    aci: 62,
+    dci: 58,
+    dailyData: {
+      dates: ['10/15','10/20','10/25','10/28','10/30','11/01','11/03'],
+      aci:   [50, 53, 55, 58, 60, 61, 62],
+      dci:   [48, 50, 52, 54, 56, 57, 58],
+    },
+    facilities: [
+      { name: '跑道(延伸中)',  damage: 0, verified: true  },
+      { name: '新型雷达阵地',  damage: 0, verified: false },
+      { name: '工程施工区',    damage: 0, verified: true  },
+    ],
   }
 ]
 
@@ -175,11 +258,11 @@ export const REPORT = {
     { time: '明日 06:00', type: 'predict', label: '预测：打击设施B', lat: 34.8, lng: 46.2, confidence: 0.76 },
   ],
   sources: [
-    { label: 'OpenSky 飞行轨迹数据', confidence: 0.95, verified: true },
-    { label: '卫星存档影像 (过境#4872)', confidence: 0.97, verified: true },
-    { label: '社交媒体爆炸报道', confidence: 0.55, verified: false },
-    { label: '官方通报', confidence: 0.62, verified: false },
-    { label: 'AIS 舰船动态', confidence: 0.93, verified: true },
+    { label: 'OpenSky 飞行轨迹数据',      confidence: 0.95, verified: true,  sourceType: 'satellite' },
+    { label: '卫星存档影像 (过境#4872)',  confidence: 0.97, verified: true,  sourceType: 'satellite' },
+    { label: '社交媒体爆炸报道',           confidence: 0.55, verified: false, sourceType: 'osint'     },
+    { label: '官方通报',                   confidence: 0.62, verified: false, sourceType: 'osint'     },
+    { label: 'AIS 舰船动态',              confidence: 0.93, verified: true,  sourceType: 'chain'     },
   ],
   summary: `根据OpenSky飞行数据、卫星存档影像及多源开源情报综合分析：
 
