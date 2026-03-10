@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { useParams } from 'react-router-dom'
-import { SITES } from '../../data/mockData'
+import { useParams, useNavigate } from 'react-router-dom'
+import { SITES, EVENTS } from '../../data/mockData'
 
 // ── 状态颜色 ─────────────────────────────────────────────────
 function statusColor(status) {
@@ -177,6 +177,145 @@ function TrendChart({ history, color }) {
   )
 }
 
+// ── 新组件：DualScore ─────────────────────────────────────────
+function DualScore({ aci, dci }) {
+  const aciColor = aci >= 80 ? '#22c55e' : aci >= 60 ? '#f59e0b' : '#ef4444'
+  const dciColor = dci >= 80 ? '#22c55e' : dci >= 60 ? '#f59e0b' : '#ef4444'
+  return (
+    <div style={{ display: 'flex', gap: '10px', marginBottom: '14px' }}>
+      {[['ACI', '攻击能力指数', aci, aciColor], ['DCI', '防御能力指数', dci, dciColor]].map(([key, label, val, color]) => (
+        <div key={key} style={{
+          flex: 1, padding: '12px', borderRadius: '4px',
+          background: `${color}11`, border: `1px solid ${color}44`,
+          textAlign: 'center',
+        }}>
+          <div style={{ fontSize: '8px', color: '#64748b', letterSpacing: '0.1em', marginBottom: '4px' }}>{key}</div>
+          <div style={{ fontSize: '28px', fontWeight: 800, color, fontFamily: 'var(--font-display)', lineHeight: 1 }}>{val}</div>
+          <div style={{ fontSize: '8px', color: '#334155', marginTop: '4px' }}>{label}</div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// ── 新组件：DualTrendChart ────────────────────────────────────
+function DualTrendChart({ dailyData }) {
+  const W = 280, H = 60
+  const { dates, aci, dci } = dailyData
+  const n = dates.length
+  function toPath(values) {
+    return values.map((v, i) => {
+      const x = (i / (n - 1)) * W
+      const y = H - (v / 100) * H
+      return `${i === 0 ? 'M' : 'L'}${x.toFixed(1)},${y.toFixed(1)}`
+    }).join(' ')
+  }
+  return (
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '8px', color: '#334155', marginBottom: '3px' }}>
+        <span>{dates[0]}</span>
+        <span style={{ display: 'flex', gap: '10px' }}>
+          <span style={{ color: '#22c55e' }}>— ACI</span>
+          <span style={{ color: '#0ea5e9' }}>— DCI</span>
+        </span>
+        <span>{dates[n - 1]}</span>
+      </div>
+      <svg width={W} height={H} style={{ overflow: 'visible', display: 'block' }}>
+        {[0.25, 0.5, 0.75, 1].map(r => (
+          <line key={r} x1={0} y1={H * (1 - r)} x2={W} y2={H * (1 - r)} stroke="#0d1a2e" strokeWidth={0.5} />
+        ))}
+        <path d={toPath(dci)} fill="none" stroke="#0ea5e9" strokeWidth={1.5} />
+        <path d={toPath(aci)} fill="none" stroke="#22c55e" strokeWidth={1.5} />
+        <circle cx={W} cy={H - (aci[n-1]/100)*H} r={3} fill="#22c55e" />
+        <circle cx={W} cy={H - (dci[n-1]/100)*H} r={3} fill="#0ea5e9" />
+      </svg>
+    </div>
+  )
+}
+
+// ── 新组件：DamageStatus ──────────────────────────────────────
+function DamageStatus({ status }) {
+  const map = {
+    operational: { label: '完好无损', color: '#22c55e', icon: '✓' },
+    damaged:     { label: '受损',     color: '#f59e0b', icon: '⚠' },
+    destroyed:   { label: '严重损毁', color: '#ef4444', icon: '✕' },
+  }
+  const { label, color, icon } = map[status] || map.operational
+  return (
+    <div style={{
+      display: 'inline-flex', alignItems: 'center', gap: '6px',
+      padding: '4px 10px', borderRadius: '2px',
+      background: `${color}15`, border: `1px solid ${color}44`,
+      fontSize: '10px', color,
+    }}>
+      <span>{icon}</span><span>{label}</span>
+    </div>
+  )
+}
+
+// ── 新组件：FacilitiesList ────────────────────────────────────
+function FacilitiesList({ facilities }) {
+  return (
+    <div>
+      {facilities.map((f, i) => (
+        <div key={i} style={{ marginBottom: '8px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px', fontSize: '10px' }}>
+            <span style={{ color: '#94a3b8' }}>{f.name}</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              {f.verified
+                ? <span style={{ color: '#22c55e', fontSize: '9px' }}>✓ 卫星验证</span>
+                : <span style={{ color: '#334155', fontSize: '9px' }}>◌ 待核实</span>}
+              <span style={{ color: f.damage > 0 ? '#ef4444' : '#22c55e', fontWeight: 700 }}>
+                {f.damage > 0 ? `损毁 ${f.damage}%` : '完好'}
+              </span>
+            </span>
+          </div>
+          <div style={{ height: '3px', background: '#0d1a2e', borderRadius: '2px' }}>
+            <div style={{
+              width: `${f.damage}%`, height: '100%', borderRadius: '2px',
+              background: f.damage > 60 ? '#ef4444' : f.damage > 20 ? '#f59e0b' : '#22c55e',
+            }} />
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// ── 新组件：RelatedEvents ─────────────────────────────────────
+function RelatedEvents({ siteId, onNavigate }) {
+  const related = EVENTS.filter(e => e.siteId === siteId && e.verified)
+  if (!related.length) return null
+  return (
+    <div>
+      <div style={{ fontSize: '9px', color: '#64748b', letterSpacing: '0.1em', marginBottom: '8px' }}>
+        信实链关联事件 · 卫星已锚定
+      </div>
+      {related.map(e => (
+        <div key={e.id} style={{
+          padding: '8px 10px', marginBottom: '4px',
+          background: '#080f1e', borderRadius: '3px',
+          border: '1px solid #1e3a5f',
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        }}>
+          <div>
+            <div style={{ fontSize: '10px', color: '#e2e8f0' }}>{e.label.replace('\n', ' ')}</div>
+            <div style={{ fontSize: '9px', color: '#64748b', marginTop: '2px' }}>{e.date} · {e.source}</div>
+          </div>
+          <button onClick={onNavigate}
+            style={{
+              padding: '3px 8px', fontSize: '9px',
+              background: '#22c55e15', border: '1px solid #22c55e44',
+              color: '#22c55e', borderRadius: '2px', cursor: 'pointer',
+            }}>
+            → 链
+          </button>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 // ── 地图组件 ─────────────────────────────────────────────────
 function SiteMap({ sites, selectedId, onSelect }) {
   const mapRef = useRef(null)
@@ -197,7 +336,7 @@ function SiteMap({ sites, selectedId, onSelect }) {
       L.control.zoom({ position: 'bottomright' }).addTo(map)
 
       sites.forEach(site => {
-        const color = scoreColor(site.combatScore)
+        const color = statusColor(site.status)
         const icon = L.divIcon({
           className: '',
           html: `<div style="
@@ -210,7 +349,7 @@ function SiteMap({ sites, selectedId, onSelect }) {
             font-family:JetBrains Mono;font-weight:700;
             box-shadow:0 0 10px ${color}66;
             cursor:pointer;
-          ">${site.combatScore}</div>`,
+          ">${site.aci}</div>`,
           iconSize: [24, 24], iconAnchor: [12, 12]
         })
         const marker = L.marker([site.lat, site.lng], { icon })
@@ -222,12 +361,19 @@ function SiteMap({ sites, selectedId, onSelect }) {
     })
   }, [])
 
+  useEffect(() => {
+    if (!mapInstance.current || !selectedId) return
+    const site = sites.find(s => s.id === selectedId)
+    if (site) mapInstance.current.flyTo([site.lat, site.lng], 7, { duration: 1 })
+  }, [selectedId])
+
   return <div ref={mapRef} style={{ width: '100%', height: '100%' }} />
 }
 
 // ── 主组件 ───────────────────────────────────────────────────
 export default function SitePackage() {
   const { siteId } = useParams()
+  const navigate = useNavigate()
   const [selectedId, setSelectedId] = useState(siteId || SITES[0].id)
   const [imgIdx, setImgIdx] = useState(0)
 
@@ -253,11 +399,14 @@ export default function SitePackage() {
           background: 'rgba(4,8,16,0.88)', border: '1px solid #1a2d45',
           padding: '10px 14px', borderRadius: '4px', backdropFilter: 'blur(8px)'
         }}>
-          <div style={{ fontSize: '9px', color: '#64748b', marginBottom: '6px', letterSpacing: '0.1em' }}>战斗力评分</div>
-          {[['80+','#22c55e','高'], ['60-79','#f59e0b','中'], ['40-59','#f97316','低'], ['<40','#ef4444','危']].map(([r, c, l]) => (
-            <div key={r} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '3px', fontSize: '10px' }}>
+          <div style={{ fontSize: '9px', color: '#64748b', marginBottom: '6px', letterSpacing: '0.1em' }}>基地状态</div>
+          {[
+            ['#22c55e', '运行中'],
+            ['#f59e0b', '受损'],
+            ['#ef4444', '被摧毁'],
+          ].map(([c, l]) => (
+            <div key={l} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '3px', fontSize: '10px' }}>
               <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: c }} />
-              <span style={{ color: '#94a3b8' }}>{r}</span>
               <span style={{ color: c }}>{l}</span>
             </div>
           ))}
@@ -295,100 +444,82 @@ export default function SitePackage() {
         overflowY: 'auto', padding: '16px',
       }}>
         {/* 基地头部 */}
-        <div style={{ marginBottom: '16px', paddingBottom: '16px', borderBottom: '1px solid #1a2d45' }}>
-          <div style={{ fontSize: '9px', color: '#64748b', letterSpacing: '0.1em', marginBottom: '6px' }}>
-            {site.country} · {site.type}
-          </div>
-          <div style={{ fontSize: '15px', fontWeight: 700, color: '#e2e8f0', marginBottom: '12px' }}>{site.name}</div>
-          {/* 战斗力大分数 */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+        <div style={{ marginBottom: '14px', paddingBottom: '14px', borderBottom: '1px solid #1a2d45' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
+            <div style={{ fontSize: '9px', color: '#64748b', letterSpacing: '0.1em' }}>
+              {site.country} · {site.type}
+            </div>
             <div style={{
-              width: '60px', height: '60px', borderRadius: '4px',
-              border: `2px solid ${color}`,
-              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-              background: `${color}11`,
+              padding: '2px 8px', borderRadius: '2px', fontSize: '10px', fontWeight: 700,
+              background: site.strategicValue === 'S' ? '#ef444422' : site.strategicValue === 'A' ? '#f59e0b22' : '#22c55e22',
+              border: `1px solid ${site.strategicValue === 'S' ? '#ef4444' : site.strategicValue === 'A' ? '#f59e0b' : '#22c55e'}`,
+              color: site.strategicValue === 'S' ? '#ef4444' : site.strategicValue === 'A' ? '#f59e0b' : '#22c55e',
             }}>
-              <div style={{ fontSize: '22px', fontWeight: 800, color, fontFamily: 'var(--font-display)' }}>{site.combatScore}</div>
-              <div style={{ fontSize: '8px', color: '#64748b' }}>战斗力</div>
-            </div>
-            <div>
-              <div style={{ fontSize: '10px', color: '#64748b', marginBottom: '4px' }}>30天趋势</div>
-              <TrendChart history={site.scoreHistory} color={color} />
+              {site.strategicValue} 级
             </div>
           </div>
+          <div style={{ fontSize: '14px', fontWeight: 700, color: '#e2e8f0', marginBottom: '10px' }}>{site.name}</div>
+          <DamageStatus status={site.status} />
+        </div>
+
+        {/* ACI / DCI */}
+        <DualScore aci={site.aci} dci={site.dci} />
+
+        {/* 趋势图 */}
+        <div style={{ marginBottom: '14px', paddingBottom: '14px', borderBottom: '1px solid #1a2d45' }}>
+          <div style={{ fontSize: '9px', color: '#64748b', letterSpacing: '0.1em', marginBottom: '8px' }}>能力趋势（7日）</div>
+          <DualTrendChart dailyData={site.dailyData} />
         </div>
 
         {/* 雷达图 */}
-        <div style={{ marginBottom: '16px', paddingBottom: '16px', borderBottom: '1px solid #1a2d45' }}>
-          <div style={{ fontSize: '9px', color: '#64748b', letterSpacing: '0.1em', marginBottom: '10px' }}>综合能力评估</div>
+        <div style={{ marginBottom: '14px', paddingBottom: '14px', borderBottom: '1px solid #1a2d45' }}>
+          <div style={{ fontSize: '9px', color: '#64748b', letterSpacing: '0.1em', marginBottom: '8px' }}>综合能力评估</div>
           <div style={{ display: 'flex', justifyContent: 'center' }}>
             <RadarChart site={site} />
           </div>
         </div>
 
-        {/* 当前影像 */}
-        <div style={{ marginBottom: '16px', paddingBottom: '16px', borderBottom: '1px solid #1a2d45' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+        {/* 卫星影像 */}
+        <div style={{ marginBottom: '14px', paddingBottom: '14px', borderBottom: '1px solid #1a2d45' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
             <div style={{ fontSize: '9px', color: '#64748b', letterSpacing: '0.1em' }}>点位影像</div>
-            <div style={{ fontSize: '10px', color }}>
+            <div style={{ fontSize: '10px', color: statusColor(site.status) }}>
               验证置信度 {(site.imagery[imgIdx]?.score * 100).toFixed(0)}%
             </div>
           </div>
-          {/* 影像模拟区域 */}
           <div style={{
-            width: '100%', height: '160px', borderRadius: '4px',
+            width: '100%', height: '140px', borderRadius: '4px',
             background: 'linear-gradient(135deg, #0d1a2e 0%, #1a2d45 50%, #0d1a2e 100%)',
             border: '1px solid #1a2d45',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             position: 'relative', overflow: 'hidden',
           }}>
             <div style={{ fontSize: '10px', color: '#334155', textAlign: 'center' }}>
-              <div style={{ fontSize: '24px', marginBottom: '6px', opacity: 0.3 }}>◉</div>
+              <div style={{ fontSize: '20px', marginBottom: '4px', opacity: 0.3 }}>◉</div>
               <div>WMTS 影像加载点</div>
-              <div style={{ fontSize: '9px', marginTop: '4px', color: '#1a2d45' }}>{site.name}</div>
+              <div style={{ fontSize: '9px', marginTop: '2px', color: '#1a2d45' }}>{site.name}</div>
               <div style={{ fontSize: '9px', color: '#1a2d45' }}>{site.imagery[imgIdx]?.date}</div>
             </div>
-            {/* 扫描线动效 */}
             <div style={{
               position: 'absolute', top: 0, left: 0, right: 0, height: '2px',
-              background: `linear-gradient(to right, transparent, ${color}88, transparent)`,
+              background: `linear-gradient(to right, transparent, ${statusColor(site.status)}88, transparent)`,
               animation: 'scanline 3s linear infinite',
             }} />
             <style>{`@keyframes scanline { 0%{top:0} 100%{top:100%} }`}</style>
           </div>
-          <div style={{ marginTop: '8px', fontSize: '11px', color: '#94a3b8', lineHeight: 1.5 }}>
+          <div style={{ marginTop: '6px', fontSize: '10px', color: '#94a3b8', lineHeight: 1.5 }}>
             <span style={{ color: '#64748b' }}>识别结果：</span>{site.imagery[imgIdx]?.desc}
           </div>
         </div>
 
-        {/* 装备列表 */}
-        <div>
-          <div style={{ fontSize: '9px', color: '#64748b', letterSpacing: '0.1em', marginBottom: '10px' }}>
-            装备清单 · 大模型识别
-          </div>
-          {site.equipment.map((eq, i) => (
-            <div key={i} style={{
-              padding: '10px 12px', marginBottom: '6px',
-              background: '#080f1e', borderRadius: '3px',
-              border: `1px solid ${eq.verified ? '#1e3a5f' : '#1a2d45'}`,
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            }}>
-              <div>
-                <div style={{ fontSize: '11px', color: '#e2e8f0', marginBottom: '2px' }}>{eq.name}</div>
-                <div style={{ fontSize: '10px', color: eq.verified ? '#22c55e' : '#64748b' }}>
-                  {eq.verified ? '✓ 影像确认' : '◌ 待核实'}
-                </div>
-              </div>
-              <div style={{ textAlign: 'right' }}>
-                <div style={{ fontSize: '14px', fontWeight: 700, color: '#e2e8f0' }}>{eq.count}</div>
-                <div style={{
-                  fontSize: '10px',
-                  color: eq.change.startsWith('+') ? '#22c55e' : eq.change.startsWith('-') ? '#ef4444' : '#64748b'
-                }}>{eq.change}</div>
-              </div>
-            </div>
-          ))}
+        {/* 设施损毁 */}
+        <div style={{ marginBottom: '14px', paddingBottom: '14px', borderBottom: '1px solid #1a2d45' }}>
+          <div style={{ fontSize: '9px', color: '#64748b', letterSpacing: '0.1em', marginBottom: '8px' }}>设施损毁评估</div>
+          <FacilitiesList facilities={site.facilities} />
         </div>
+
+        {/* 信实链关联 */}
+        <RelatedEvents siteId={site.id} onNavigate={() => navigate('/chain')} />
       </div>
     </div>
     </div>
