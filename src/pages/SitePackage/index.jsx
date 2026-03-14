@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { SITES, EVENTS, NEWS_MARKERS } from '../../data/mockData'
+import { SITES, EVENTS, NEWS_MARKERS, OSINT_EVENTS } from '../../data/mockData'
 
 // ── 状态颜色 ─────────────────────────────────────────────────
 function statusColor(status) {
@@ -91,7 +91,7 @@ function BaseList({ sites, selectedId, onSelect }) {
       <div style={{ padding: '10px 14px', borderTop: '1px solid #1a2d45', fontSize: '9px', color: '#1e3a5f', lineHeight: 1.6 }}>
         ◉ 卫星影像 → 事实基础层<br/>
         点位数据锚定信实链节点<br/>
-        <span style={{ color: '#334155' }}>◈ {OSINT_EVENTS.length} 条开源情报待验证</span>
+        <span style={{ color: '#334155' }}>◈ {EVENTS.length} 条开源情报待验证</span>
       </div>
     </div>
   )
@@ -404,6 +404,10 @@ function NewsModal({ news, onClose }) {
           📍 {news.lat.toFixed(2)}° N, {news.lng.toFixed(2)}° E
         </div>
       </div>
+    </div>
+  )
+}
+
 // ── 新组件：OsintCard（地图浮层卡片）────────────────────────
 function OsintCard({ event, onClose }) {
   if (!event) return null
