@@ -6,6 +6,10 @@ const cesiumSource = 'node_modules/cesium/Build/Cesium'
 const cesiumBaseUrl = 'cesiumStatic'
 
 export default defineConfig({
+  // Required: tells Cesium's buildModuleUrl() where to find Workers/Assets at runtime
+  define: {
+    CESIUM_BASE_URL: JSON.stringify(`/${cesiumBaseUrl}`),
+  },
   plugins: [
     react(),
     viteStaticCopy({
@@ -17,4 +21,16 @@ export default defineConfig({
       ],
     }),
   ],
+  optimizeDeps: {
+    include: ['cesium'],
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          cesium: ['cesium'],
+        },
+      },
+    },
+  },
 })
