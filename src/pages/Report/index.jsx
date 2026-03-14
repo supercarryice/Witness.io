@@ -181,7 +181,10 @@ function TacticalDemo({ phase, viewMode = "3d", viewerId = "main" }) {
         shouldAnimate: true,
         requestRenderMode: false,
         imageryProvider: new UrlTemplateImageryProvider({
-          url: "https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png",
+          url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png",
+          subdomains: ["a", "b", "c", "d"],
+          maximumLevel: 19,
+          hasAlphaChannel: false,
           credit: "©OpenStreetMap ©CARTO",
         }),
         terrainProvider: new EllipsoidTerrainProvider(),
@@ -193,6 +196,12 @@ function TacticalDemo({ phase, viewMode = "3d", viewerId = "main" }) {
       }
 
       viewerRef.current = viewer;
+
+      // Suppress the render-error dialog — tile decode failures are non-fatal
+      viewer.scene.renderError.addEventListener((_scene, err) => {
+        console.warn("[Cesium] render error (suppressed):", err);
+      });
+
       viewer.scene.globe.enableLighting = true;
       viewer.scene.skyAtmosphere.show = true;
       viewer.scene.fog.enabled = true;
