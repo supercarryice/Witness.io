@@ -1,8 +1,10 @@
+import { useState } from 'react'
 import { BrowserRouter, Routes, Route, NavLink } from 'react-router-dom'
 import EventChain from './pages/EventChain'
 import SitePackage from './pages/SitePackage'
 import Report from './pages/Report'
 import WorldSim from './pages/WorldSim'
+import Intro from './pages/Intro'
 
 const NAV_ITEMS = [
   { path: '/',          label: '态势分析', sub: 'SITUATION MAP',  icon: '◎' },
@@ -31,16 +33,16 @@ function Nav() {
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontSize: '12px', color: '#f59e0b',
           fontFamily: 'var(--font-display)',
-        }}>S</div>
+        }}>W</div>
         <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '14px', letterSpacing: '0.15em', color: '#e2e8f0' }}>
-          SATINT
+          WITNESS
         </span>
         <span style={{ fontSize: '10px', color: '#334155', marginLeft: '4px', letterSpacing: '0.1em' }}>v0.1 DEMO</span>
         <span style={{
           fontSize: '9px', color: '#1e3a5f', marginLeft: '8px',
           letterSpacing: '0.08em', borderLeft: '1px solid #1a2d45', paddingLeft: '8px',
         }}>
-          卫星影像 → 信实验证 → 智能预测
+          遥感验证 · 眼见为实
         </span>
       </div>
 
@@ -76,6 +78,12 @@ function Nav() {
 }
 
 export default function App() {
+  const [entered, setEntered] = useState(false)
+
+  if (!entered) {
+    return <Intro onEnter={() => setEntered(true)} />
+  }
+
   return (
     <BrowserRouter>
       <Nav />
