@@ -41,9 +41,9 @@ function setupDefs(svg) {
   const defs = svg.append('defs')
   defs.append('style').text(`
     @keyframes pulse-seed { 0% { r: 28px; opacity: 0.5; } 100% { r: 50px; opacity: 0; } }
-    @keyframes node-in    { from { opacity: 0; transform: scale(0.1); } to { opacity: 1; transform: scale(1); } }
+    @keyframes node-in    { from { opacity: 0; } to { opacity: 1; } }
     .seed-pulse { animation: pulse-seed 2.5s ease-out infinite; transform-box: fill-box; transform-origin: center; }
-    .node-new   { animation: node-in 0.45s ease-out both; transform-box: fill-box; transform-origin: center; }
+    .node-new   { animation: node-in 0.45s ease-out both; }
   `)
   const mk = (id, color) =>
     defs.append('marker').attr('id', id).attr('markerWidth', 6).attr('markerHeight', 6)
