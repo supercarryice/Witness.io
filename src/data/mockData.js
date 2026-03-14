@@ -260,10 +260,10 @@ export const SITES = [
         score: 0.88,
       },
     ],
-    status: "operational",
-    strategicValue: "B",
-    aci: 40,
-    dci: 30,
+    status: 'operational',
+    strategicValue: 'B',
+    aci: 57,
+    dci: 44,
     dailyData: {
       dates: ["10/28", "10/29", "10/30", "10/31", "11/01", "11/02", "11/03"],
       aci: [38, 39, 40, 40, 40, 40, 40],
@@ -301,10 +301,10 @@ export const SITES = [
         score: 0.95,
       },
     ],
-    status: "destroyed",
-    strategicValue: "A",
-    aci: 18,
-    dci: 15,
+    status: 'destroyed',
+    strategicValue: 'A',
+    aci: 15,
+    dci: 13,
     dailyData: {
       dates: ["10/28", "10/29", "10/30", "10/31", "11/01", "11/02", "11/03"],
       aci: [75, 76, 77, 77, 75, 20, 18],
@@ -622,6 +622,98 @@ export function chainScore(chainId) {
   return Math.min(1, baseAvg + verifiedBonus);
 }
 
+// ── 计算基地攻击力和防御力指数 ────────────────────────────────
+function calculateCombatIndices(site) {
+  // 装备攻击力映射
+  const attackEquipmentMap = {
+    'F-16 Fighting Falcon': 10,
+    'C-130 Hercules': 5,
+    'MQ-9 Reaper': 15,
+    'RC-135 侦察机': 20,
+    'CVN-77 航母': 50,
+    '提康德罗加级巡洋舰': 30,
+    '阿利伯克级驱逐舰': 25,
+    '反舰导弹发射车': 15,
+    '重型工程机械': 2, // 建设装备，攻击力较低
+  };
+
+  // 装备防御力映射
+  const defenseEquipmentMap = {
+    'SAM 阵地 (Patriot)': 20,
+    '雷达站': 10,
+    '新型雷达阵地': 15,
+  };
+
+  // 计算装备攻击力
+  let attackFromEquipment = 0;
+  site.equipment.forEach(eq => {
+    const attackValue = attackEquipmentMap[eq.name] || 0;
+    attackFromEquipment += attackValue * eq.count;
+  });
+
+  // 计算装备防御力
+  let defenseFromEquipment = 0;
+  site.equipment.forEach(eq => {
+    const defenseValue = defenseEquipmentMap[eq.name] || 0;
+    defenseFromEquipment += defenseValue * eq.count;
+  });
+
+  // 设施损坏对防御力的影响
+  let facilityDamagePenalty = 0;
+  site.facilities.forEach(fac => {
+    facilityDamagePenalty += fac.damage * 0.5; // 每1%损坏减少0.5防御力
+  });
+
+  // 状态乘数
+  const statusMultiplier = {
+    'operational': 1.0,
+    'damaged': 0.7,
+    'destroyed': 0.3,
+  }[site.status] || 1.0;
+
+  // 战略价值加成
+  const strategicBonus = {
+    'S': 20,
+    'A': 10,
+    'B': 5,
+  }[site.strategicValue] || 0;
+
+  // 计算最终指数
+  const aci = Math.round((attackFromEquipment + strategicBonus) * statusMultiplier);
+  const dci = Math.round((defenseFromEquipment + strategicBonus - facilityDamagePenalty) * statusMultiplier);
+
+  return { aci: Math.max(0, aci), dci: Math.max(0, dci) };
+}
+
+// 更新基地的aci和dci
+SITES.forEach(site => {
+  const { aci, dci } = calculateCombatIndices(site);
+  site.aci = aci;
+  site.dci = dci;
+});
+
+// 归一化aci和dci到0-100范围
+const aciValues = SITES.map(site => site.aci);
+const dciValues = SITES.map(site => site.dci);
+
+const maxAci = Math.max(...aciValues);
+const minAci = Math.min(...aciValues);
+const maxDci = Math.max(...dciValues);
+const minDci = Math.min(...dciValues);
+
+SITES.forEach(site => {
+  if (maxAci !== minAci) {
+    site.aci = Math.round(((site.aci - minAci) / (maxAci - minAci)) * 100);
+  } else {
+    site.aci = 50; // 如果所有值相同，设为50
+  }
+  if (maxDci !== minDci) {
+    site.dci = Math.round(((site.dci - minDci) / (maxDci - minDci)) * 100);
+  } else {
+    site.dci = 50; // 如果所有值相同，设为50
+  }
+});
+
 export const CHAINS = [
   {
     id: "A",
@@ -758,144 +850,66 @@ export const SIM_ROUNDS = [
   },
 ]
 
-export const SIM_LOGS = [
-  { time: '06:12:04', level: 'info',  round: 0, text: '载入信实链种子事件：F-16打击行动 [已验证] + 2个关联实体' },
-  { time: '06:12:06', level: 'info',  round: 0, text: '初始化模拟角色：8个行为方就绪 | 知识图谱节点: 11' },
-  { time: '06:12:08', level: 'info',  round: 1, text: '[轮次 1] AG1 [五角大楼] → 生成虚拟节点：危机评估会议' },
-  { time: '06:12:09', level: 'info',  round: 1, text: '[轮次 1] AG3 [飞行员] → 生成虚拟节点：任务报告' },
-  { time: '06:12:10', level: 'warn',  round: 1, text: '[轮次 1] AG4 [伊朗军方] → 生成虚拟节点：紧急战情室 ↑威胁' },
-  { time: '06:12:11', level: 'info',  round: 1, text: '[轮次 1] AG5 [现场指挥官] → 生成虚拟节点：损毁评估' },
-  { time: '06:12:12', level: 'info',  round: 1, text: '[轮次 1] AG7 [情报机构] → 生成虚拟节点：卫星复查' },
-  { time: '06:12:13', level: 'info',  round: 1, text: '[轮次 1] AG8 [媒体] → 生成虚拟节点：首波报道' },
-  { time: '06:12:14', level: 'info',  round: 1, text: '轮次 1 完成 · +6 虚拟节点 · 图谱规模: 17 节点' },
-  { time: '06:12:17', level: 'info',  round: 2, text: '[轮次 2] AG1 [五角大楼] → 生成虚拟节点：戒备升级' },
-  { time: '06:12:18', level: 'warn',  round: 2, text: '[轮次 2] AG4 [伊朗军方] → 生成虚拟节点：报复预案批准 ↑高风险' },
-  { time: '06:12:19', level: 'info',  round: 2, text: '[轮次 2] AG2 [基地指挥官] → 生成虚拟节点：人员撤离' },
-  { time: '06:12:20', level: 'info',  round: 2, text: '[轮次 2] AG6 [防空阵地] → 生成虚拟节点：防空升级方案' },
-  { time: '06:12:22', level: 'info',  round: 2, text: '[轮次 2] AG7 [情报机构] → 生成虚拟节点：伊朗反应预测 P=0.82' },
-  { time: '06:12:23', level: 'info',  round: 2, text: '[轮次 2] AG8 [媒体] → 生成虚拟节点：国际舆论发酵' },
-  { time: '06:12:24', level: 'info',  round: 2, text: '轮次 2 完成 · +6 虚拟节点 · 图谱规模: 23 节点' },
-  { time: '06:12:28', level: 'warn',  round: 3, text: '[轮次 3] AG4 [伊朗军方] → 代理人骚扰 (P=0.70)' },
-  { time: '06:12:29', level: 'info',  round: 3, text: '[轮次 3] AG1 [五角大楼] → 外交介入 (P=0.65)' },
-  { time: '06:12:30', level: 'error', round: 3, text: '[轮次 3] AG4 [伊朗军方] → 无人机直接报复 (P=0.25) 升级路径!' },
-  { time: '06:12:31', level: 'warn',  round: 3, text: '[轮次 3] AG7 [情报机构] → 核计划加速 (P=0.80)' },
-  { time: '06:12:33', level: 'info',  round: 3, text: '轮次 3 完成 · +4 虚拟节点 · 图谱规模: 27 节点' },
-  { time: '06:12:35', level: 'info',  round: 3, text: '世界模拟完成 · 主路径：代理人冲突+外交降级并行 · 置信度 0.76' },
+// ── 地图新闻标记点 ───────────────────────────────────────────
+export const NEWS_MARKERS = [
+  {
+    id: 'N1',
+    lat: 36.3,
+    lng: 43.5,
+    title: '战机编队集结',
+    date: '2025-11-03 05:45 UTC',
+    source: '卫星实时监测',
+    content: '多架战机在塔尔阿夫尔空军基地集结，准备执行任务。根据卫星实时影像，至少4架F-16战斗机已进入待命状态。',
+    type: 'military',
+  },
+  {
+    id: 'N2',
+    lat: 35.3,
+    lng: 44.8,
+    title: '目标区域活动频繁',
+    date: '2025-11-03 07:20 UTC',
+    source: '社交媒体/OSINT',
+    content: '当地民众报告听到多起爆炸声，空中有飞行物活动。官方目前未发布评论。多个独立社交媒体账号确认此事件。',
+    type: 'news',
+  },
+  {
+    id: 'N3',
+    lat: 35.5,
+    lng: 45.1,
+    title: '设施受损确认',
+    date: '2025-11-03 10:15 UTC',
+    source: '卫星影像分析',
+    content: '最新卫星过境影像显示，胡拉玛军事设施2号机库屋顶已坍塌，主跑道上发现3处弹坑。预估损毁程度95%。',
+    type: 'verified',
+  },
+  {
+    id: 'N4',
+    lat: 26.8,
+    lng: 56.2,
+    title: '航母编队通过海峡',
+    date: '2025-11-01 14:30 UTC',
+    source: 'AIS船舶追踪',
+    content: '美国第7舰队CVN-77航母编队进入霍尔木兹海峡。包括2艘提康德罗加级巡洋舰和4艘阿利伯克级驱逐舰同时通过。',
+    type: 'military',
+  },
+  {
+    id: 'N5',
+    lat: 27.3,
+    lng: 57.1,
+    title: '防空导弹阵地激活',
+    date: '2025-11-01 18:45 UTC',
+    source: '卫星监测',
+    content: '伊朗岸基反舰导弹阵地进入激活状态。卫星影像显示6辆导弹发射车已离开遮蔽棚，进入临战部署。',
+    type: 'military',
+  },
+  {
+    id: 'N6',
+    lat: 33.5,
+    lng: 44.0,
+    title: '跑道扩建工程进展',
+    date: '2025-10-28 08:00 UTC',
+    source: '卫星时序影像',
+    content: '伊拉克某空军基地跑道扩建工程已完成50%。新增的北向跑道延伸可允许重型轰炸机起降。',
+    type: 'infrastructure',
+  },
 ]
-
-// ── 开源情报事件（OSINT）────────────────────────────────────────
-// 置信度由大模型结合信实链数据库综合评分，坐标为模糊坐标（低精度）
-export const OSINT_EVENTS = [
-  {
-    id: "O1",
-    title: "社交媒体：胡拉玛附近爆炸声",
-    content:
-      "多名当地居民在推特上报告听到连续爆炸声，并观测到火光，方向为西北方向军事设施。",
-    source: "Twitter · @IraqSecurity",
-    sourceType: "social",
-    date: "2025-11-02 23:41",
-    lat: 35.49,
-    lng: 45.05,
-    confidence: 0.32,
-    llmAnalysis:
-      "信源为匿名社交账号，内容与A链已知打击时间高度吻合，但缺乏多源佐证，置信度偏低。",
-    relatedChain: "A",
-    relatedSiteId: "S3",
-  },
-  {
-    id: "O2",
-    title: "新闻报道：F-16战队目击",
-    content:
-      "路透社援引匿名官员称，多架F-16于当地时间凌晨起飞，目标不明，飞行方向朝伊朗边境。",
-    source: "路透社",
-    sourceType: "news",
-    date: "2025-11-03 06:30",
-    lat: 36.62,
-    lng: 42.53,
-    confidence: 0.61,
-    llmAnalysis:
-      "路透社信源可靠性较高，内容与A1节点卫星轨迹数据存在时间空间吻合，已纳入A链加权。",
-    relatedChain: "A",
-    relatedSiteId: "S1",
-  },
-  {
-    id: "O3",
-    title: "匿名电报：伊朗海军异动",
-    content:
-      "Telegram频道消息称霍尔木兹海峡附近发现异常海军集结，无法核实发布者身份。",
-    source: "Telegram · 匿名频道",
-    sourceType: "anonymous",
-    date: "2025-11-01 14:20",
-    lat: 26.55,
-    lng: 56.28,
-    confidence: 0.21,
-    llmAnalysis:
-      "信源完全匿名，内容可能与B链事件相关，但与已有AIS数据存在时间矛盾，置信度极低。",
-    relatedChain: "B",
-    relatedSiteId: "S4",
-  },
-  {
-    id: "O4",
-    title: "官方声明：伊拉克否认基地扩建",
-    content:
-      "伊拉克国防部发声明否认境内某空军基地存在跑道延伸施工，与卫星影像相矛盾。",
-    source: "伊拉克国防部官网",
-    sourceType: "official",
-    date: "2025-10-29 10:00",
-    lat: 33.12,
-    lng: 43.72,
-    confidence: 0.44,
-    llmAnalysis:
-      "官方否认声明与C链卫星验证影像内容直接矛盾，综合分析认为声明可信度低，列入反向信源。",
-    relatedChain: "C",
-    relatedSiteId: "S6",
-  },
-  {
-    id: "O5",
-    title: "开源论坛：导弹车目击报告",
-    content:
-      "多个军事观察论坛用户报告，在伊朗西海岸公路发现疑似导弹发射车车队移动。",
-    source: "AirPower论坛 · r/MiddleEastConflict",
-    sourceType: "social",
-    date: "2025-11-02 18:05",
-    lat: 27.22,
-    lng: 56.05,
-    confidence: 0.55,
-    llmAnalysis:
-      "多平台同源报告增强可信度，内容与B2节点激活记录时间一致，已辅助提升B链整体加权分。",
-    relatedChain: "B",
-    relatedSiteId: "S5",
-  },
-  {
-    id: "O6",
-    title: "新闻：卫星图显示新型雷达部署",
-    content:
-      "Planet Labs商业卫星图片被军事分析博主解读为新型远程雷达阵地，尚未得到官方证实。",
-    source: "BellingCat分析",
-    sourceType: "news",
-    date: "2025-10-31 09:15",
-    lat: 33.28,
-    lng: 44.15,
-    confidence: 0.73,
-    llmAnalysis:
-      "BellingCat方法论较为严谨，商业影像可信，内容与C链C3节点雷达部署吻合，置信度中高。",
-    relatedChain: "C",
-    relatedSiteId: "S6",
-  },
-  {
-    id: "O7",
-    title: "社交媒体：侦察机低空飞越",
-    content:
-      "多名民众拍摄到疑似无人侦察机在伊拉克北部低空飞行，视频在TikTok广泛传播。",
-    source: "TikTok · 多用户",
-    sourceType: "social",
-    date: "2025-11-01 20:33",
-    lat: 35.22,
-    lng: 43.82,
-    confidence: 0.48,
-    llmAnalysis:
-      "视频真实性难以验证，飞行特征与A2节点记录的侦察任务时间接近，已标记为弱关联参考。",
-    relatedChain: "A",
-    relatedSiteId: "S2",
-  },
-];
